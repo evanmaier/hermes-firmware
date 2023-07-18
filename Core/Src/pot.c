@@ -1,9 +1,9 @@
 #include "pot.h"
 #include "stdio.h"
 
-uint16_t Poll_ADC(ADC_HandleTypeDef hadc)
+uint32_t Poll_ADC(ADC_HandleTypeDef hadc)
 {
-	uint16_t ADC_RES = 0;
+	uint32_t ADC_RES = 0;
 	// Start ADC Conversion
 	HAL_ADC_Start(&hadc);
 	// Poll ADC1 Peripheral & TimeOut = 1mSec

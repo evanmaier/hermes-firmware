@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-uint16_t Poll_ADC(ADC_HandleTypeDef hadc1);
+uint32_t Poll_ADC(ADC_HandleTypeDef hadc1);
 void Test_Pot();
 
 #endif

@@ -23,12 +23,12 @@
 /* USER CODE BEGIN Includes */
 #include "arm_math.h"
 #include "pot.h"
-#include "transforms.h"
+//#include "transforms.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-ADC_HandleTypeDef hadc1;
+//ADC_HandleTypeDef hadc1;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -43,8 +43,8 @@ ADC_HandleTypeDef hadc1;
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 
@@ -53,8 +53,9 @@ TIM_HandleTypeDef htim1;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_ADC1_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_ADC1_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -92,24 +93,71 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
   MX_TIM1_Init();
+  MX_ADC1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  Test_Pot(hadc1);
-  HAL_Delay(1);
-  Test_Transforms();
-  HAL_Delay(1);
+//  Test_Pot(hadc1);
+//  HAL_Delay(1);
+//  Test_Transforms();
+//  HAL_Delay(1);
+  uint32_t duty_cycle = 50;
+  uint32_t adc_val = 0;
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  float pid_error = 0;
+  arm_pid_instance_f32 PID;
+  PID.Kp = 20;
+  PID.Ki = 0.1;
+  PID.Kd = 0;
+  arm_pid_init_f32(&PID, 1);
+  float target_voltage = 1.0;
+  float result = 0;
+  float measured_voltage = 0;
+  uint32_t max = 100;
+  uint32_t min = 0;
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+
   while (1)
   {
-    /* USER CODE END WHILE */
+	  // set pwm duty cycle
+	  TIM2->CCR1 = duty_cycle;
+	  HAL_Delay(1);
 
-    /* USER CODE BEGIN 3 */
+	  // read pwm voltage by averaging 1000 samples
+
+	  adc_val = 0;
+	  for (int i = 0; i < 1000; i++)
+	  {
+		  adc_val += Poll_ADC(hadc1);
+	  }
+	  adc_val = adc_val / 1000;
+	  measured_voltage = ( (float)adc_val  / 4092.0) * 3.0;
+
+	  // calculate PID error
+	  pid_error = (target_voltage - measured_voltage);
+
+	  // set pid output to be new duty cycle
+	  result = arm_pid_f32(&PID, pid_error);
+
+	  // handle overflow
+	  if (result > max)
+	  {
+		  duty_cycle = max;
+	  }
+	  else if (result < min)
+	  {
+		  duty_cycle = min;
+	  }
+	  else
+	  {
+		  duty_cycle = result;
+	  }
+
   }
-  /* USER CODE END 3 */
+
 }
 
 /**
@@ -248,6 +296,65 @@ static void MX_TIM1_Init(void)
   /* USER CODE BEGIN TIM1_Init 2 */
 
   /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 16-1;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 100-1;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
 
 }
 
