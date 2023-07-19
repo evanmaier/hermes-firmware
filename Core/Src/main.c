@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "arm_math.h"
 #include "pot.h"
-//#include "transforms.h"
+#include "transforms.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,7 +99,7 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  Test_Pot(hadc1);
 //  HAL_Delay(1);
-//  Test_Transforms();
+  Test_Transforms();
 //  HAL_Delay(1);
   uint32_t duty_cycle = 50;
   uint32_t adc_val = 0;
