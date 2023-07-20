@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include <adc.h>
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -113,8 +112,12 @@ int main(void)
   TIM3->CCMR1 = 0x6868; // set up channels 1 and 2
   TIM3->CCMR2 = 0x0068; // set up channel 3
 
+  // set sample phase voltages
+  float Va = 0, Vb = 1;
+
   // updatable voltages in Alpha-Beta coordinates:
-  float NewAlphaVoltage = 25, NewBetaVoltage = 0;
+  float NewAlphaVoltage, NewBetaVoltage;
+  arm_clarke_f32(Va, Vb, &NewAlphaVoltage, &NewBetaVoltage);
 
   // 1st step: create and initialize the global variable of user data structure
   tSVPWM sSVPWM = SVPWM_DEFAULTS;
@@ -365,7 +368,7 @@ static void MX_TIM3_Init(void)
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
   htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
-  htim3.Init.Period = 255;
+  htim3.Init.Period = 254;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
