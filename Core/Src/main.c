@@ -24,6 +24,7 @@
 #include "arm_math.h"
 #include "pot.h"
 #include "transforms.h"
+#include "svpwm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -99,22 +100,44 @@ int main(void)
   /* USER CODE BEGIN 2 */
 //  Test_Pot(hadc1);
 //  HAL_Delay(1);
-  Test_Transforms();
+//  Test_Transforms();
 //  HAL_Delay(1);
-  uint32_t duty_cycle = 50;
-  uint32_t adc_val = 0;
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  float pid_error = 0;
-  arm_pid_instance_f32 PID;
-  PID.Kp = 20;
-  PID.Ki = 0.1;
-  PID.Kd = 0;
-  arm_pid_init_f32(&PID, 1);
-  float target_voltage = 1.0;
-  float result = 0;
-  float measured_voltage = 0;
-  uint32_t max = 100;
-  uint32_t min = 0;
+//  uint32_t duty_cycle = 50;
+//  uint32_t adc_val = 0;
+//  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+//  float pid_error = 0;
+//  arm_pid_instance_f32 PID;
+//  PID.Kp = 20;
+//  PID.Ki = 0.1;
+//  PID.Kd = 0;
+//  arm_pid_init_f32(&PID, 1);
+//  float target_voltage = 1.0;
+//  float result = 0;
+//  float measured_voltage = 0;
+//  uint32_t max = 100;
+//  uint32_t min = 0;
+
+  // svpwm code
+  // updatable voltages in Alpha-Beta coordinates:
+  float NewAlphaVoltage = 0, NewBetaVoltage = 1.414;
+
+  // 1st step: create and initialize the global variable of user data structure
+  tSVPWM sSVPWM = SVPWM_DEFAULTS;
+
+  // 2nd step: do some settings
+  sSVPWM.enInType = AlBe;  // set the input type
+  sSVPWM.fUdc = 25.0f;    // set the DC-Link voltage in Volts
+  sSVPWM.fUdcCCRval = 255; // set the Max value of counter compare register which equal to DC-Link voltage
+
+  // 3rd step: Next code must be executed every time a new calculation of duty cycles is needed
+  sSVPWM.fUal = NewAlphaVoltage;	// set a new value of voltage Alpha
+  sSVPWM.fUbe = NewBetaVoltage;	// set a new value of voltage Beta
+  sSVPWM.m_calc(&sSVPWM);		// call the SVPWM duty cycles calculation function
+  CCR0 = sSVPWM.fCCRA;		// update the duty cycle value in CCR0
+  CCR1 = sSVPWM.fCCRB;		// update the duty cycle value in CCR1
+  CCR2 = sSVPWM.fCCRC;		// update the duty cycle value in CCR2
+
+  // 4th step: write interrupt routine for CCR0-2
 
   /* USER CODE END 2 */
 
@@ -122,39 +145,39 @@ int main(void)
 
   while (1)
   {
-	  // set pwm duty cycle
-	  TIM2->CCR1 = duty_cycle;
-	  HAL_Delay(1);
-
-	  // read pwm voltage by averaging 1000 samples
-
-	  adc_val = 0;
-	  for (int i = 0; i < 1000; i++)
-	  {
-		  adc_val += Poll_ADC(hadc1);
-	  }
-	  adc_val = adc_val / 1000;
-	  measured_voltage = ( (float)adc_val  / 4092.0) * 3.0;
-
-	  // calculate PID error
-	  pid_error = (target_voltage - measured_voltage);
-
-	  // set pid output to be new duty cycle
-	  result = arm_pid_f32(&PID, pid_error);
-
-	  // handle overflow
-	  if (result > max)
-	  {
-		  duty_cycle = max;
-	  }
-	  else if (result < min)
-	  {
-		  duty_cycle = min;
-	  }
-	  else
-	  {
-		  duty_cycle = result;
-	  }
+//	  // set pwm duty cycle
+//	  TIM2->CCR1 = duty_cycle;
+//	  HAL_Delay(1);
+//
+//	  // read pwm voltage by averaging 1000 samples
+//
+//	  adc_val = 0;
+//	  for (int i = 0; i < 1000; i++)
+//	  {
+//		  adc_val += Poll_ADC(hadc1);
+//	  }
+//	  adc_val = adc_val / 1000;
+//	  measured_voltage = ( (float)adc_val  / 4092.0) * 3.0;
+//
+//	  // calculate PID error
+//	  pid_error = (target_voltage - measured_voltage);
+//
+//	  // set pid output to be new duty cycle
+//	  result = arm_pid_f32(&PID, pid_error);
+//
+//	  // handle overflow
+//	  if (result > max)
+//	  {
+//		  duty_cycle = max;
+//	  }
+//	  else if (result < min)
+//	  {
+//		  duty_cycle = min;
+//	  }
+//	  else
+//	  {
+//		  duty_cycle = result;
+//	  }
 
   }
 
