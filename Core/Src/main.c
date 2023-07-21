@@ -24,8 +24,6 @@
 #include "LED.h"
 #include "Inputs.h"
 #include "Timer.h"
-#include <arm_math.h>
-#include <math.h>
 
 
 volatile uint16_t ADC_DMA_BUFF[ADC_DMA_BUFF_SIZE] = {0};

@@ -33,6 +33,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdint.h>
+#include <arm_math.h>
+#include <math.h>
 
 /* USER CODE END Includes */
 
