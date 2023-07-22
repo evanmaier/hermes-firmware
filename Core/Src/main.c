@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "arm_math.h"
 #include "svpwm.h"
 #include "transforms.h"
 /* USER CODE END Includes */
@@ -65,6 +64,15 @@ static void MX_TIM3_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+float Valpha = 1, Vbeta = 0;
+float Ta = 0, Tb = 0, Tc = 0;
+svpwm_calc(Valpha, Vbeta, &Ta, &Tb, &Tc);
+TIM3->CCR1 = Ta;
+TIM3->CCR2 = Tb;
+TIM3->CCR3 = Tc;
+HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_1);
+HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_2);
+HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_3);
 
 /* USER CODE END 0 */
 
