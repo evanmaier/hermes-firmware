@@ -101,39 +101,12 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  // Setup capture/compare mode register
-  /*
-   * Bits 15 and 7 - OCxCE = 0: OC1Ref is not affected by the ETRF input
-   * Bits 14:12 and 6:4 - OCxM = 110: PWM mode 1
-   * Bits 11 and 3 - OCxPE = 1: write CCRx into preload register and update on event
-   * Bits 10 and 2 - OCxFE = 0: fast mode disabled
-   * Bits 9:8 and 1:0 - CCxS = 00: CCx channel configured as output
-  */
-  TIM3->CCMR1 = 0x6868; // set up channels 1 and 2
-  TIM3->CCMR2 = 0x0068; // set up channel 3
 
-  // set sample phase voltages
-  float Va = 0, Vb = 1;
 
-  // updatable voltages in Alpha-Beta coordinates:
-  float NewAlphaVoltage, NewBetaVoltage;
-  arm_clarke_f32(Va, Vb, &NewAlphaVoltage, &NewBetaVoltage);
+  TIM3->CCR1 = 50;		// update the duty cycle value in CCR0
 
-  // 1st step: create and initialize the global variable of user data structure
-  tSVPWM sSVPWM = SVPWM_DEFAULTS;
 
-  // 2nd step: do some settings
-  sSVPWM.enInType = AlBe;  // set the input type
-  sSVPWM.fUdc = 25.0f;    // set the DC-Link voltage in Volts
-  sSVPWM.fUdcCCRval = 255; // set the Max value of counter compare register which equal to DC-Link voltage
-
-  // 3rd step: Next code must be executed every time a new calculation of duty cycles is needed
-  sSVPWM.fUal = NewAlphaVoltage;	// set a new value of voltage Alpha
-  sSVPWM.fUbe = NewBetaVoltage;	// set a new value of voltage Beta
-  sSVPWM.m_calc(&sSVPWM);		// call the SVPWM duty cycles calculation function
-  TIM3->CCR1 = sSVPWM.fCCRA;		// update the duty cycle value in CCR0
-  TIM3->CCR2 = sSVPWM.fCCRB;		// update the duty cycle value in CCR1
-  TIM3->CCR3 = sSVPWM.fCCRC;		// update the duty cycle value in CCR2
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -367,8 +340,8 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
-  htim3.Init.Period = 254;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 100;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
