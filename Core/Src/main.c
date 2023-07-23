@@ -102,10 +102,11 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	float Valpha = 0.707, Vbeta = 0.707;
 	float Ta = 0, Tb = 0, Tc = 0;
+	int Fcounter = 16000000;
 	svpwm_calc(Valpha, Vbeta, &Ta, &Tb, &Tc);
-	TIM3->CCR1 = Ta*CCRMAX;
-	TIM3->CCR2 = Tb*CCRMAX;
-	TIM3->CCR3 = Tc*CCRMAX;
+	TIM3->CCR1 = Ta*Fcounter;
+	TIM3->CCR2 = Tb*Fcounter;
+	TIM3->CCR3 = Tc*Fcounter;
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
