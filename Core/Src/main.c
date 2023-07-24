@@ -100,13 +100,15 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-	float Valpha = 0.707, Vbeta = 0.707;
+    float Fcounter = 16000000;
+	float Valpha = 0.5, Vbeta = 0.5;
 	float Ta = 0, Tb = 0, Tc = 0;
-	int Fcounter = 16000000;
-	svpwm_calc(Valpha, Vbeta, &Ta, &Tb, &Tc);
-	TIM3->CCR1 = Ta*Fcounter;
-	TIM3->CCR2 = Tb*Fcounter;
-	TIM3->CCR3 = Tc*Fcounter;
+	float Ts = TIM3->ARR / Fcounter;
+
+	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
+	TIM3->CCR1 = Ta * Fcounter;
+	TIM3->CCR2 = Tb * Fcounter;
+	TIM3->CCR3 = Tc * Fcounter;
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
 	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
@@ -342,8 +344,8 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 100;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
+  htim3.Init.Period = 255;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
