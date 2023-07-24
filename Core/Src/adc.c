@@ -1,5 +1,4 @@
-#include "pot.h"
-#include "stdio.h"
+#include <adc.h>
 
 uint32_t Poll_ADC(ADC_HandleTypeDef hadc)
 {
@@ -13,9 +12,9 @@ uint32_t Poll_ADC(ADC_HandleTypeDef hadc)
 	// Return result
 	return ADC_RES;
 }
-void Test_Pot(ADC_HandleTypeDef hadc)
+float Test_ADC(ADC_HandleTypeDef hadc)
 {
 	float voltage = 0;
 	voltage = ( (float)Poll_ADC(hadc)  / 4092.0) * 3.0;
-	printf("voltage = %f", voltage);
+	return voltage;
 }

@@ -21,10 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "arm_math.h"
-#include "pot.h"
-#include "transforms.h"
 #include "svpwm.h"
+#include "transforms.h"
+#include "adc.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,8 +43,11 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
 
@@ -57,6 +59,8 @@ static void MX_GPIO_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM2_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -97,90 +101,39 @@ int main(void)
   MX_TIM1_Init();
   MX_ADC1_Init();
   MX_TIM2_Init();
+  MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-//  Test_Pot(hadc1);
-//  HAL_Delay(1);
-//  Test_Transforms();
-//  HAL_Delay(1);
-//  uint32_t duty_cycle = 50;
-//  uint32_t adc_val = 0;
-//  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-//  float pid_error = 0;
-//  arm_pid_instance_f32 PID;
-//  PID.Kp = 20;
-//  PID.Ki = 0.1;
-//  PID.Kd = 0;
-//  arm_pid_init_f32(&PID, 1);
-//  float target_voltage = 1.0;
-//  float result = 0;
-//  float measured_voltage = 0;
-//  uint32_t max = 100;
-//  uint32_t min = 0;
 
-  // svpwm code
-  // updatable voltages in Alpha-Beta coordinates:
-  float NewAlphaVoltage = 0, NewBetaVoltage = 1.414;
+    float Fcounter = 16000000;
+	float Valpha = 0.5, Vbeta = 0.5;
+	float Ta = 0, Tb = 0, Tc = 0;
+	float Ts = TIM3->ARR / Fcounter;
 
-  // 1st step: create and initialize the global variable of user data structure
-  tSVPWM sSVPWM = SVPWM_DEFAULTS;
-
-  // 2nd step: do some settings
-  sSVPWM.enInType = AlBe;  // set the input type
-  sSVPWM.fUdc = 25.0f;    // set the DC-Link voltage in Volts
-  sSVPWM.fUdcCCRval = 255; // set the Max value of counter compare register which equal to DC-Link voltage
-
-  // 3rd step: Next code must be executed every time a new calculation of duty cycles is needed
-  sSVPWM.fUal = NewAlphaVoltage;	// set a new value of voltage Alpha
-  sSVPWM.fUbe = NewBetaVoltage;	// set a new value of voltage Beta
-  sSVPWM.m_calc(&sSVPWM);		// call the SVPWM duty cycles calculation function
-  CCR0 = sSVPWM.fCCRA;		// update the duty cycle value in CCR0
-  CCR1 = sSVPWM.fCCRB;		// update the duty cycle value in CCR1
-  CCR2 = sSVPWM.fCCRC;		// update the duty cycle value in CCR2
-
-  // 4th step: write interrupt routine for CCR0-2
-
+	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
+	// TIM3 active high _|-|_ TIM4 active low  -|_|-
+	// TIM3 and TIM4 synchronized with ITR2
+	TIM3->CCR1 = Ta * Fcounter; // Q1
+	TIM3->CCR2 = Tb * Fcounter; // Q3
+	TIM3->CCR3 = Tc * Fcounter; // Q5
+	TIM4->CCR1 = Ta * Fcounter; // Q0
+	TIM4->CCR2 = Tb * Fcounter; // Q2
+	TIM4->CCR3 = Tc * Fcounter; // Q4
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
   /* USER CODE END 2 */
 
   /* Infinite loop */
-
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	  // set pwm duty cycle
-//	  TIM2->CCR1 = duty_cycle;
-//	  HAL_Delay(1);
-//
-//	  // read pwm voltage by averaging 1000 samples
-//
-//	  adc_val = 0;
-//	  for (int i = 0; i < 1000; i++)
-//	  {
-//		  adc_val += Poll_ADC(hadc1);
-//	  }
-//	  adc_val = adc_val / 1000;
-//	  measured_voltage = ( (float)adc_val  / 4092.0) * 3.0;
-//
-//	  // calculate PID error
-//	  pid_error = (target_voltage - measured_voltage);
-//
-//	  // set pid output to be new duty cycle
-//	  result = arm_pid_f32(&PID, pid_error);
-//
-//	  // handle overflow
-//	  if (result > max)
-//	  {
-//		  duty_cycle = max;
-//	  }
-//	  else if (result < min)
-//	  {
-//		  duty_cycle = min;
-//	  }
-//	  else
-//	  {
-//		  duty_cycle = result;
-//	  }
-
+    /* USER CODE BEGIN 3 */
   }
-
+  /* USER CODE END 3 */
 }
 
 /**
@@ -382,6 +335,157 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
+  htim3.Init.Period = 255;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_OC_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC4REF;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_ACTIVE;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  if (HAL_TIM_OC_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
+  htim4.Init.Period = 255;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_TRIGGER;
+  sSlaveConfig.InputTrigger = TIM_TS_ITR2;
+  if (HAL_TIM_SlaveConfigSynchro(&htim4, &sSlaveConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -394,6 +498,9 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
