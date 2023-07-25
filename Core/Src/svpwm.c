@@ -52,3 +52,23 @@ void svpwm_calc(float Ts, float Valpha, float Vbeta, float* Ta, float* Tb, float
 	}
 
 }
+
+void svpwm_apply(TIM_HandleTypeDef* htim3, TIM_HandleTypeDef* htim4, float Fcounter, float Ta, float Tb, float Tc)
+{
+	TIM3->CCR1 = Ta * Fcounter; // Q1
+	TIM3->CCR2 = Tb * Fcounter; // Q3
+	TIM3->CCR3 = Tc * Fcounter; // Q5
+	TIM4->CCR1 = Ta * Fcounter; // Q0
+	TIM4->CCR2 = Tb * Fcounter; // Q2
+	TIM4->CCR3 = Tc * Fcounter; // Q4
+}
+
+void svpwm_start(TIM_HandleTypeDef* htim3, TIM_HandleTypeDef* htim4)
+{
+	HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(htim4, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(htim4, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(htim3, TIM_CHANNEL_3);
+	HAL_TIM_PWM_Start(htim4, TIM_CHANNEL_3);
+}

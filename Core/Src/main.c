@@ -111,20 +111,10 @@ int main(void)
 	float Ts = TIM3->ARR / Fcounter;
 
 	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
-	// TIM3 active high _|-|_ TIM4 active low  -|_|-
-	// TIM3 and TIM4 synchronized with ITR2
-	TIM3->CCR1 = Ta * Fcounter; // Q1
-	TIM3->CCR2 = Tb * Fcounter; // Q3
-	TIM3->CCR3 = Tc * Fcounter; // Q5
-	TIM4->CCR1 = Ta * Fcounter; // Q0
-	TIM4->CCR2 = Tb * Fcounter; // Q2
-	TIM4->CCR3 = Tc * Fcounter; // Q4
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_2);
-	HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_3);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+	svpwm_apply(&htim3, &htim4, Fcounter, Ta, Tb, Tc);
+	svpwm_start(&htim3, &htim4);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
