@@ -106,16 +106,15 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
     float Fcounter = 16000000;
-	float Valpha = 0.5, Vbeta = 0.5;
+	float Valpha = 0, Vbeta = 0, Vd = 0, Vq = 0;
 	float Ta = 0, Tb = 0, Tc = 0;
 	float Ts = TIM3->ARR / Fcounter;
-	float motor_velocity = 0; // rad/s
-	float motor_angle = 0; // rad
+	float motor_angle = 0, prev_motor_angle = 0; // rad
 	float target_velocity = 100; // rad/s
-	float sample_time = 2*Ts; // time for 1 ful switching cycle
+	float sample_time = 2*Ts; // time for 1 full switching cycle
 
-	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
-	svpwm_apply(&htim3, &htim4, Fcounter, Ta, Tb, Tc);
+//	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
+//	svpwm_apply(&htim3, &htim4, Fcounter, Ta, Tb, Tc);
 	svpwm_start(&htim3, &htim4);
 
 
@@ -125,11 +124,12 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    if (motor_velocity < 1000) // placeholder value
-    {
-    	motor_angle = motor_angle + target_velocity * sample_time;
-    }
-    // s
+    	motor_angle = prev_motor_angle + target_velocity * sample_time;
+    	Vq = VDC * MMAX;
+    	InvPark_Transform(&Vd, &Vq, &motor_angle, &Valpha, &Vbeta);
+    	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tb);
+    	svpwm_apply(&htim3, &htim4, Fcounter, Ta, Tb, Tc);
+    	prev_motor_angle = motor_angle;
   }
   /* USER CODE END 3 */
 }
