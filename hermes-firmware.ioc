@@ -1,9 +1,7 @@
 #MicroXplorer Configuration settings - do not modify
 ADC1.Channel-3\#ChannelRegularConversion=ADC_CHANNEL_7
-ADC1.IPParameters=Rank-3\#ChannelRegularConversion,master,Channel-3\#ChannelRegularConversion,SamplingTime-3\#ChannelRegularConversion,NbrOfConversionFlag
+ADC1.IPParameters=master,NbrOfConversionFlag,Channel-3\#ChannelRegularConversion
 ADC1.NbrOfConversionFlag=1
-ADC1.Rank-3\#ChannelRegularConversion=1
-ADC1.SamplingTime-3\#ChannelRegularConversion=ADC_SAMPLETIME_3CYCLES
 ADC1.master=1
 CAD.formats=
 CAD.pinconfig=
@@ -98,7 +96,7 @@ ProjectManager.StackSize=0x400
 ProjectManager.TargetToolchain=STM32CubeIDE
 ProjectManager.ToolChainLocation=
 ProjectManager.UnderRoot=true
-ProjectManager.functionlistsort=1-SystemClock_Config-RCC-false-HAL-false,2-MX_GPIO_Init-GPIO-false-HAL-true,3-MX_TIM1_Init-TIM1-false-HAL-true,4-MX_ADC1_Init-ADC1-false-HAL-true,5-MX_TIM2_Init-TIM2-false-HAL-true,6-MX_TIM3_Init-TIM3-false-HAL-true,7-MX_TIM4_Init-TIM4-false-HAL-true,8-MX_DAC_Init-DAC-false-HAL-true
+ProjectManager.functionlistsort=1-SystemClock_Config-RCC-false-HAL-false,2-MX_GPIO_Init-GPIO-false-HAL-true,3-MX_TIM1_Init-TIM1-false-HAL-true,4-MX_ADC1_Init-ADC1-false-HAL-true,5-MX_TIM2_Init-TIM2-false-HAL-true,6-MX_TIM3_Init-TIM3-false-HAL-true,7-MX_TIM4_Init-TIM4-false-HAL-true
 RCC.48MHZClocksFreq_Value=48000000
 RCC.AHBFreq_Value=16000000
 RCC.APB1Freq_Value=16000000
