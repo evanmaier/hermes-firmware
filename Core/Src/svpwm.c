@@ -6,6 +6,7 @@ void svpwm_calc(float Ts, float Valpha, float Vbeta, float* Ta, float* Tb, float
 	float Vref = hypotf(Valpha, Vbeta);
 	if (Vref > MMAX) Vref = MMAX;
 	float angle = atan2f(Vbeta, Valpha);
+	if (angle < 0) angle += M_TWOPI;
 	int sector = angle / PIdiv3 + 1;
 
 	float T1 = TWODIVSQRT3 * Ts *(Vref / VDC) * sinf(sector * PIdiv3 - angle);

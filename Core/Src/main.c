@@ -103,7 +103,6 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
-
   /* USER CODE BEGIN 2 */
     float Fcounter = 16000000;
 	float Valpha = 0, Vbeta = 0, Vd = 0, Vq = 0;
@@ -117,18 +116,19 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
-    /* USER CODE END WHILE */
-	target_velocity = Poll_ADC(hadc1);
+	while(1)
+	{
+	target_velocity = Poll_ADC(hadc1)/128;
 	motor_angle = prev_motor_angle + target_velocity * sample_time;
 	Vq = VDC * MMAX;
 	InvPark_Transform(&Vd, &Vq, &motor_angle, &Valpha, &Vbeta);
-	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tb);
+	svpwm_calc(Ts, Valpha, Vbeta, &Ta, &Tb, &Tc);
 	svpwm_apply(&htim3, &htim4, Fcounter, Ta, Tb, Tc);
 	prev_motor_angle = motor_angle;
+	}
+    /* USER CODE END WHILE */
+
     /* USER CODE BEGIN 3 */
-  }
   /* USER CODE END 3 */
 }
 
@@ -351,7 +351,7 @@ static void MX_TIM3_Init(void)
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
   htim3.Init.Prescaler = 0;
-  htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
   htim3.Init.Period = 255;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
@@ -372,7 +372,7 @@ static void MX_TIM3_Init(void)
   {
     Error_Handler();
   }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_OC4REF;
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_ENABLE;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
   {
